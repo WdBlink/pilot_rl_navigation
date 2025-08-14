@@ -1,0 +1,57 @@
+# 强化学习无人机定位导航系统依赖库
+# Author: wdblink
+
+# 深度学习框架
+torch>=1.12.0
+torchvision>=0.13.0
+
+# 强化学习算法库
+stable-baselines3>=1.6.0
+gymnasium>=0.26.0
+
+# 数值计算和科学计算
+numpy>=1.21.0
+scipy>=1.8.0
+
+# 图像处理
+opencv-python>=4.6.0
+
+# 飞控通信协议
+pymavlink>=2.4.0
+
+# 可视化
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# 训练监控
+tensorboard>=2.8.0
+
+# 数据验证
+pydantic>=1.9.0
+
+# 日志系统
+loguru>=0.6.0
+
+# 微软AirSim仿真引擎
+airsim>=1.8.1
+msgpack-rpc-python>=0.4.1
+
+# 配置文件处理
+PyYAML>=6.0
+
+# 数据处理
+pandas>=1.4.0
+
+# 测试框架
+pytest>=7.0.0
+pytest-cov>=3.0.0
+
+# 代码格式化
+black>=22.0.0
+
+# 类型检查
+mypy>=0.950
+
+# 开发工具
+ipython>=8.0.0
+jupyter>=1.0.0
