@@ -1,0 +1,240 @@
+# AirSim训练环境配置文件
+# Author: wdblink
+# Date: 2024
+
+# 系统配置
+system:
+  # 强化学习智能体配置
+  rl_agent:
+    algorithm: "PPO"  # 强化学习算法 (PPO, SAC, TD3)
+    learning_rate: 0.0003
+    batch_size: 64
+    buffer_size: 100000
+    gamma: 0.99  # 折扣因子
+    tau: 0.005   # 软更新参数
+    
+    # 网络架构
+    network:
+      hidden_sizes: [256, 256]
+      activation: "relu"
+      use_batch_norm: false
+    
+    # 训练配置
+    training:
+      max_episodes: 1000
+      max_steps_per_episode: 500
+      update_frequency: 10
+      save_frequency: 100
+      evaluation_frequency: 50
+  
+  # 仿真环境配置
+  environment:
+    max_steps: 500
+    step_time: 0.1  # 仿真步长时间(秒)
+    
+    # 传感器配置
+    sensors:
+      camera_name: "front_center"
+      image_width: 640
+      image_height: 480
+    
+    # 噪声配置
+    noise:
+      position_std: 0.1    # 位置噪声标准差(米)
+      attitude_std: 0.05   # 姿态噪声标准差(弧度)
+      optical_failure_rate: 0.02  # 光学定位失效率
+    
+    # 风场配置
+    wind:
+      enabled: true
+      max_speed: 5.0  # 最大风速(m/s)
+      direction_variance: 30.0  # 风向变化范围(度)
+    
+    # 管道参数
+    pipeline:
+      max_distance: 100.0  # 最大管道距离(米)
+      detection_threshold: 0.8  # 检测阈值
+  
+  # 位置融合配置
+  fusion:
+    # 卡尔曼滤波器参数
+    kalman:
+      process_noise_std: 0.1   # 过程噪声标准差
+      measurement_noise_std: 0.5  # 测量噪声标准差
+  
+  # 故障恢复配置
+  recovery:
+    max_attempts: 3
+    timeout_seconds: 30.0
+    fallback_strategy: "return_to_home"
+  
+  # 日志配置
+  logging:
+    level: "INFO"
+    save_logs: true
+    log_directory: "logs"
+    max_log_files: 10
+  
+  # AirSim配置
+  airsim:
+    # 连接配置
+    connection:
+      ip: "127.0.0.1"  # AirSim服务器IP地址
+      port: 41451      # AirSim API端口
+      timeout: 10.0    # 连接超时时间(秒)
+      vehicle_name: "Drone1"  # 无人机名称
+    
+    # 地理坐标原点
+    origin:
+      latitude: 47.641468   # 原点纬度(西雅图)
+      longitude: -122.140165  # 原点经度
+      altitude: 122.0       # 原点海拔高度(米)
+    
+    # 飞行参数
+    flight:
+      max_altitude: 120.0     # 最大飞行高度(米)
+      min_altitude: 5.0       # 最小飞行高度(米)
+      max_velocity: 10.0      # 最大飞行速度(m/s)
+      max_acceleration: 5.0   # 最大加速度(m/s²)
+      takeoff_altitude: 10.0  # 起飞高度(米)
+      landing_velocity: 1.0   # 着陆速度(m/s)
+    
+    # 训练环境参数
+    training:
+      reset_on_collision: true    # 碰撞时重置环境
+      reset_on_timeout: true      # 超时时重置环境
+      reward_collision: -100.0    # 碰撞惩罚
+      reward_timeout: -50.0       # 超时惩罚
+      reward_goal_reached: 100.0  # 到达目标奖励
+      reward_distance_factor: 1.0 # 距离奖励因子
+    
+    # 相机配置
+    cameras:
+      # 机腹垂直向下相机
+      downward:
+        name: "downward_camera"
+        image_type: 0  # Scene = 0, DepthPlanar = 1, DepthPerspective = 2, etc.
+        width: 640
+        height: 480
+        fov_degrees: 90.0
+        position: [0.0, 0.0, 0.0]  # 相对于无人机的位置(x, y, z)
+        rotation: [0.0, -90.0, 0.0]  # 相机旋转角度(pitch, roll, yaw)
+      
+      # 前向相机
+      forward:
+        name: "front_center"
+        image_type: 0
+        width: 640
+        height: 480
+        fov_degrees: 90.0
+        position: [0.25, 0.0, 0.0]
+        rotation: [0.0, 0.0, 0.0]
+    
+    # 安全配置
+    safety:
+      enable_collision_detection: true
+      collision_threshold: 0.1  # 碰撞检测阈值(米)
+      emergency_landing_enabled: true
+      geofence_enabled: true
+      geofence_radius: 500.0    # 地理围栏半径(米)
+      max_tilt_angle: 45.0      # 最大倾斜角度(度)
+      low_battery_threshold: 20.0  # 低电量阈值(百分比)
+
+# 任务配置示例
+missions:
+  # 矩形巡航任务
+  rectangular_patrol:
+    name: "矩形巡航"
+    description: "执行矩形路径巡航任务"
+    waypoints:
+      - latitude: 47.642468
+        longitude: -122.140165
+        altitude: 30.0
+        speed: 5.0
+      - latitude: 47.642468
+        longitude: -122.139165
+        altitude: 30.0
+        speed: 5.0
+      - latitude: 47.641468
+        longitude: -122.139165
+        altitude: 30.0
+        speed: 5.0
+      - latitude: 47.641468
+        longitude: -122.140165
+        altitude: 30.0
+        speed: 5.0
+  
+  # 螺旋上升任务
+  spiral_ascent:
+    name: "螺旋上升"
+    description: "执行螺旋上升飞行模式"
+    center_latitude: 47.641468
+    center_longitude: -122.140165
+    start_altitude: 10.0
+    end_altitude: 50.0
+    radius: 20.0
+    turns: 3
+    speed: 3.0
+  
+  # 搜索救援任务
+  search_and_rescue:
+    name: "搜索救援"
+    description: "执行网格搜索任务"
+    search_area:
+      north_east:
+        latitude: 47.642468
+        longitude: -122.139165
+      south_west:
+        latitude: 47.640468
+        longitude: -122.141165
+    altitude: 25.0
+    grid_spacing: 50.0  # 网格间距(米)
+    overlap_ratio: 0.3  # 重叠率
+
+# 数据采集配置
+data_collection:
+  # 图像采集
+  images:
+    save_raw_images: true
+    save_processed_images: true
+    image_format: "png"  # png, jpg, bmp
+    compression_quality: 95
+    
+  # 传感器数据
+  sensors:
+    save_imu_data: true
+    save_gps_data: true
+    save_barometer_data: true
+    save_magnetometer_data: true
+    sampling_rate: 10.0  # 采样率(Hz)
+  
+  # 存储配置
+  storage:
+    base_directory: "data"
+    create_timestamp_folders: true
+    max_storage_gb: 10.0
+    auto_cleanup: true
+
+# 可视化配置
+visualization:
+  # 实时显示
+  real_time:
+    show_camera_feed: true
+    show_trajectory: true
+    show_telemetry: true
+    update_rate: 5.0  # 更新率(Hz)
+  
+  # 后处理分析
+  analysis:
+    generate_flight_report: true
+    create_trajectory_plot: true
+    create_performance_charts: true
+    export_kml: true  # 导出Google Earth格式
+
+# 调试配置
+debug:
+  enable_debug_mode: false
+  verbose_logging: false
+  save_debug_images: false
+  simulation_speed_factor: 1.0  # 仿真速度倍数
+  pause_on_error: true

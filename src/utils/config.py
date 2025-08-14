@@ -122,6 +122,56 @@ class FusionConfig(BaseModel):
         return v
 
 
+class AirSimConfig(BaseModel):
+    """AirSim仿真环境配置类
+    
+    定义AirSim仿真环境的连接和运行参数。
+    """
+    # 连接配置
+    host: str = Field(default="127.0.0.1", description="AirSim服务器地址")
+    port: int = Field(default=41451, gt=0, description="AirSim服务器端口")
+    vehicle_name: str = Field(default="Drone1", description="无人机名称")
+    
+    # 地理坐标原点配置
+    origin_latitude: float = Field(default=47.641468, description="原点纬度")
+    origin_longitude: float = Field(default=-122.140165, description="原点经度")
+    origin_altitude: float = Field(default=122.0, description="原点海拔高度")
+    
+    # 飞行参数配置
+    default_speed: float = Field(default=5.0, gt=0, description="默认飞行速度(m/s)")
+    max_speed: float = Field(default=15.0, gt=0, description="最大飞行速度(m/s)")
+    takeoff_altitude: float = Field(default=10.0, gt=0, description="起飞高度(m)")
+    waypoint_hold_time: float = Field(default=2.0, ge=0, description="航点悬停时间(s)")
+    
+    # 训练环境配置
+    max_episode_steps: int = Field(default=1000, gt=0, description="最大轮次步数")
+    step_timeout: float = Field(default=30.0, gt=0, description="步骤超时时间(s)")
+    
+    # 相机配置
+    camera_name: str = Field(default="bottom_center", description="相机名称")
+    image_width: int = Field(default=640, gt=0, description="图像宽度")
+    image_height: int = Field(default=480, gt=0, description="图像高度")
+    
+    # 安全配置
+    min_altitude: float = Field(default=5.0, gt=0, description="最小飞行高度(m)")
+    max_altitude: float = Field(default=100.0, gt=0, description="最大飞行高度(m)")
+    safety_radius: float = Field(default=200.0, gt=0, description="安全飞行半径(m)")
+    
+    @validator('max_speed')
+    def validate_max_speed(cls, v, values):
+        """验证最大速度"""
+        if 'default_speed' in values and v < values['default_speed']:
+            raise ValueError("最大速度不能小于默认速度")
+        return v
+    
+    @validator('max_altitude')
+    def validate_altitude_range(cls, v, values):
+        """验证高度范围"""
+        if 'min_altitude' in values and v <= values['min_altitude']:
+            raise ValueError("最大高度必须大于最小高度")
+        return v
+
+
 class RecoveryConfig(BaseModel):
     """自主恢复配置类
     
@@ -184,6 +234,7 @@ class SystemConfig(BaseModel):
     # 子系统配置
     rl_agent: RLAgentConfig = Field(default_factory=RLAgentConfig)
     environment: EnvironmentConfig = Field(default_factory=EnvironmentConfig)
+    airsim: AirSimConfig = Field(default_factory=AirSimConfig)
     fusion: FusionConfig = Field(default_factory=FusionConfig)
     recovery: RecoveryConfig = Field(default_factory=RecoveryConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
