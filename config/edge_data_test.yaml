@@ -1,0 +1,55 @@
+# OptiMatchLocator 边缘数据测试配置文件
+# 用于测试无人机拍摄的图像与底图的匹配效果
+
+# 设备配置
+device: "auto"  # 可选: "auto", "cuda", "cpu", "mps"
+# 地理位置参数
+start_lon: 114.631412  # 起始经度
+start_lat: 34.195191  # 起始纬度
+# 测试参数
+test_num: 10  # 最大测试的图像数量
+
+# 模型参数
+extractor:
+  model: superpoint
+  num_keypoints: 3000
+
+matcher:
+  model: lightglue
+  weights_path: "/home/wdblink/Project/OptiMatchLocator/weights/lg_finetuned_pair_v2.pth"  # LightGlue模型权重路径
+
+calibrator:
+  model_type: 'linear'
+  weights_path: "/home/wdblink/Project/OptiMatchLocator/weights/drone_position_model.pkl"
+
+detector:
+  model: YOLOe
+  weights_path: "/home/wdblink/Project/OptiMatchLocator/weights/yoloe-11l-seg.pt"  # YOLO检测器权重路径
+  # 视觉提示标注文件
+  annotation_file: "/home/wdblink/Project/OptiMatchLocator/data/DSC00557_annotations.json"  # 标注文件路径
+  # 目标检测类别
+  names:
+    - plane
+    - ship
+    - storage tank
+    - baseball diamond
+    - tennis court
+    - basketball court
+    - ground track field
+    - harbor
+    - bridge
+    - large vehicle
+    - small vehicle
+    - helicopter
+    - roundabout
+    - soccer ball field
+    - swimming pool
+    - container crane
+
+data:
+  # 图像路径
+  image_ste_path: "/mnt/d/TestData/merge4.tif"  # 卫星底图影像路径
+  image_uav_path: "/mnt/d/TestData/test0"  # 无人机影像目录路径
+  dsm_path: "/mnt/d/Datasets/匹配数据集/geotag_orth2/DSM.tif"  # 数字高程模型影像路径
+  # 保存路径
+  output_path: "/mnt/d/TestData/output/中卫/pytorch1"  # 匹配输出结果保存路径

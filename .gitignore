@@ -1,0 +1,339 @@
+# 强化学习无人机定位导航系统 - Git忽略文件
+# Author: wdblink
+# Date: 2024
+
+# Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PYMANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# 机器学习和深度学习相关
+# 训练数据
+data/training/
+data/validation/
+data/test/
+data/raw/
+data/processed/
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.npy
+*.npz
+
+# 模型文件
+models/
+checkpoints/
+*.pth
+*.pt
+*.ckpt
+*.pb
+*.onnx
+*.tflite
+*.mlmodel
+
+# TensorBoard日志
+logs/tensorboard/
+tensorboard_logs/
+runs/
+
+# Weights & Biases
+wandb/
+
+# MLflow
+mlruns/
+
+# 日志文件
+logs/
+*.log
+*.out
+*.err
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.temp
+
+# 输出文件
+outputs/
+results/
+plots/
+figures/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.pdf
+*.eps
+
+# 配置文件（敏感信息）
+config/secrets.yaml
+config/private_*.yaml
+.secrets
+*.key
+*.pem
+*.crt
+*.p12
+
+# AirSim相关
+AirSim/
+AirSimNH/
+Blocks/
+LandscapeMountains/
+CityEnviron/
+*.pak
+*.uasset
+*.umap
+
+# 无人机日志和数据
+flight_logs/
+telemetry/
+*.tlog
+*.bin
+*.ulg
+
+# 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 压缩文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 备份文件
+*.bak
+*.backup
+*.old
+
+# 编译文件
+*.o
+*.a
+*.lib
+*.dll
+*.exe
+
+# 数据库文件
+*.db
+*.sqlite
+*.sqlite3
+
+# 缓存目录
+.cache/
+cache/
+__pycache__/
+.pytest_cache/
+
+# 性能分析文件
+*.prof
+*.profile
+
+# 文档生成
+_build/
+_static/
+_templates/
+
+# 本地开发
+.local/
+local_config.yaml
+development.yaml
+
+# 实验和测试
+experiments/
+test_outputs/
+scratch/
+playground/
+
+# 第三方库和工具
+node_modules/
+bower_components/
+
+# 操作系统生成的文件
+*.pid
+*.seed
+*.pid.lock
+
+# 运行时文件
+*.sock
+*.lock
+
+# 安全相关
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+# IDE和编辑器
+.history/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 自定义忽略
+# 添加项目特定的忽略规则
+my_experiments/
+personal_notes.md
+todo.txt
