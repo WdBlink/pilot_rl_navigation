@@ -16,6 +16,7 @@ Date: 2024
 
 import asyncio
 import logging
+import math
 import time
 from typing import Dict, List, Optional, Tuple, Any
 import numpy as np
@@ -32,6 +33,10 @@ except ImportError:
 from ..utils.data_types import Position3D, FlightAttitude, VelocityVector
 from ..utils.logger import setup_logger
 from ..utils.config import AirSimConfig
+from ..core.reward_function import (
+    MultiDimensionalRewardFunction, FlightStatus, TaskPhase, 
+    DecisionType, RewardComponents
+)
 
 
 class FlightMode(Enum):
@@ -555,6 +560,23 @@ class AirSimTrainingEnvironment:
         self.step_count = 0
         self.max_episode_steps = config.max_episode_steps
         
+        # 初始化多元化奖励函数
+        self.reward_function = MultiDimensionalRewardFunction()
+        
+        # 飞行状态管理
+        self.current_task_phase = TaskPhase.NORMAL
+        self.flight_status = FlightStatus(
+            planned_trajectory=[],
+            target_position=Position3D(x=0, y=0, z=-10),
+            trajectory_tolerance=5.0,
+            battery_level=1.0
+        )
+        
+        # 状态历史记录
+        self.previous_state: Optional[Dict[str, Any]] = None
+        self.deviation_detected = False
+        self.recovery_start_time: Optional[float] = None
+        
     async def reset(self) -> Dict[str, Any]:
         """
         重置环境
@@ -570,10 +592,33 @@ class AirSimTrainingEnvironment:
         self.step_count = 0
         self.episode_count += 1
         
+        # 重置奖励函数状态
+        self.reward_function.reset()
+        
+        # 重置飞行状态
+        self.current_task_phase = TaskPhase.NORMAL
+        self.flight_status.battery_level = 1.0
+        self.flight_status.is_collision = False
+        self.flight_status.deviation_distance = 0.0
+        self.flight_status.recovery_time = 0.0
+        self.flight_status.recovery_success = True
+        
+        # 重置状态历史
+        self.previous_state = None
+        self.deviation_detected = False
+        self.recovery_start_time = None
+        
+        # 生成随机飞行计划（示例）
+        self._generate_random_flight_plan()
+        
         # 获取初始状态
         sensor_data = await self.airsim_env._collect_sensor_data()
+        initial_observation = self._create_observation(sensor_data)
         
-        return self._create_observation(sensor_data)
+        # 保存初始状态
+        self.previous_state = initial_observation
+        
+        return initial_observation
     
     def _create_observation(self, sensor_data: SensorData) -> Dict[str, Any]:
         """
@@ -617,49 +662,179 @@ class AirSimTrainingEnvironment:
         self.step_count += 1
         
         # 执行动作(这里需要根据具体的动作空间实现)
-        # ...
+        await self._execute_action(action)
         
         # 获取新的观测
         sensor_data = await self.airsim_env._collect_sensor_data()
         observation = self._create_observation(sensor_data)
         
-        # 计算奖励(这里需要根据具体任务实现)
-        reward = self._calculate_reward(sensor_data, action)
+        # 更新飞行状态
+        self._update_flight_status(observation, action)
+        
+        # 使用多元化奖励函数计算奖励
+        reward_components = self.reward_function.calculate_reward(
+            current_state=self.previous_state or observation,
+            action=action,
+            next_state=observation,
+            flight_status=self.flight_status,
+            task_phase=self.current_task_phase
+        )
+        
+        reward = reward_components.total
         
         # 检查是否结束
-        done = self.step_count >= self.max_episode_steps
+        done = self._check_episode_termination(observation)
         
         # 附加信息
         info = {
             'step_count': self.step_count,
             'episode_count': self.episode_count,
-            'mission_status': self.airsim_env.get_mission_status().value
+            'mission_status': self.airsim_env.get_mission_status().value,
+            'task_phase': self.current_task_phase.value,
+            'reward_components': {
+                'tracking': reward_components.tracking,
+                'recovery': reward_components.recovery,
+                'emergency': reward_components.emergency,
+                'safety': reward_components.safety,
+                'efficiency': reward_components.efficiency
+            },
+            'flight_status': {
+                'battery_level': self.flight_status.battery_level,
+                'deviation_distance': self.flight_status.deviation_distance,
+                'is_collision': self.flight_status.is_collision
+            }
         }
+        
+        # 更新前一状态
+        self.previous_state = observation
         
         return observation, reward, done, info
     
-    def _calculate_reward(self, sensor_data: SensorData, action: Dict[str, Any]) -> float:
+    def _generate_random_flight_plan(self):
         """
-        计算奖励函数
+        生成随机飞行计划
+        """
+        # 生成简单的矩形飞行路径
+        waypoints = [
+            Position3D(x=0, y=0, z=-10),
+            Position3D(x=50, y=0, z=-10),
+            Position3D(x=50, y=50, z=-10),
+            Position3D(x=0, y=50, z=-10),
+            Position3D(x=0, y=0, z=-10)
+        ]
+        
+        self.flight_status.planned_trajectory = waypoints
+        self.flight_status.target_position = waypoints[-1]
+    
+    async def _execute_action(self, action: Dict[str, Any]):
+        """
+        执行动作
         
         Args:
-            sensor_data: 传感器数据
+            action: 动作字典
+        """
+        # 这里需要根据具体的动作空间实现
+        # 示例：假设动作包含目标位置
+        if 'target_position' in action:
+            target_pos = action['target_position']
+            await self.airsim_env._fly_to_position(
+                north=target_pos[0],
+                east=target_pos[1], 
+                down=target_pos[2],
+                speed=5.0
+            )
+    
+    def _update_flight_status(self, observation: Dict[str, Any], action: Dict[str, Any]):
+        """
+        更新飞行状态
+        
+        Args:
+            observation: 当前观测
             action: 执行的动作
+        """
+        current_pos = Position3D(
+            x=observation['position'][0],
+            y=observation['position'][1],
+            z=observation['position'][2]
+        )
+        
+        # 更新电池电量（简化模型）
+        energy_consumption = 0.001  # 每步消耗0.1%电量
+        self.flight_status.battery_level = max(0.0, self.flight_status.battery_level - energy_consumption)
+        
+        # 检测碰撞（简化实现）
+        altitude = -current_pos.z
+        if altitude < 1.0:  # 接地检测
+            self.flight_status.is_collision = True
+        
+        # 计算偏离距离
+        if self.flight_status.planned_trajectory:
+            min_distance = float('inf')
+            for waypoint in self.flight_status.planned_trajectory:
+                distance = self._calculate_distance_3d(current_pos, waypoint)
+                min_distance = min(min_distance, distance)
+            
+            self.flight_status.deviation_distance = min_distance
+            
+            # 检测是否偏离轨迹
+            if min_distance > self.flight_status.trajectory_tolerance and not self.deviation_detected:
+                self.deviation_detected = True
+                self.recovery_start_time = time.time()
+                self.current_task_phase = TaskPhase.RECOVERY
+            elif min_distance <= self.flight_status.trajectory_tolerance and self.deviation_detected:
+                # 成功寻回
+                self.deviation_detected = False
+                if self.recovery_start_time:
+                    self.flight_status.recovery_time = time.time() - self.recovery_start_time
+                    self.flight_status.recovery_success = True
+                self.current_task_phase = TaskPhase.NORMAL
+        
+        # 检测紧急状态
+        if self.flight_status.battery_level < 0.2:
+            self.current_task_phase = TaskPhase.EMERGENCY
+    
+    def _check_episode_termination(self, observation: Dict[str, Any]) -> bool:
+        """
+        检查episode是否应该结束
+        
+        Args:
+            observation: 当前观测
             
         Returns:
-            float: 奖励值
+            bool: 是否结束
         """
-        # 这里是示例实现，实际需要根据具体任务设计
-        reward = 0.0
+        # 基本终止条件
+        if self.step_count >= self.max_episode_steps:
+            return True
         
-        # 基础存活奖励
-        reward += 1.0
+        # 碰撞终止
+        if self.flight_status.is_collision:
+            return True
         
-        # 根据位置给予奖励/惩罚
-        if sensor_data and sensor_data.position:
-            # 高度惩罚(过高或过低)
-            altitude = -sensor_data.position.z
-            if altitude < 5 or altitude > 50:
-                reward -= 10.0
+        # 电池耗尽终止
+        if self.flight_status.battery_level <= 0.0:
+            return True
         
-        return reward
+        # 高度异常终止
+        altitude = -observation['position'][2]
+        if altitude < 1.0 or altitude > 100.0:
+            return True
+        
+        return False
+    
+    def _calculate_distance_3d(self, pos1: Position3D, pos2: Position3D) -> float:
+        """
+        计算3D距离
+        
+        Args:
+            pos1: 位置1
+            pos2: 位置2
+            
+        Returns:
+            float: 距离
+        """
+        return math.sqrt(
+            (pos1.x - pos2.x) ** 2 +
+            (pos1.y - pos2.y) ** 2 +
+            (pos1.z - pos2.z) ** 2
+        )

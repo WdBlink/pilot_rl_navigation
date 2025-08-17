@@ -1,0 +1,240 @@
+# 多元化奖励函数训练配置文件
+# 该配置文件用于配置基于多元化奖励函数的强化学习训练参数
+
+# AirSim连接配置
+airsim:
+  host: '127.0.0.1'
+  port: 41451
+  timeout: 30
+
+# 训练配置
+training:
+  # 总训练时间步数
+  total_timesteps: 200000
+  
+  # 每个episode最大步数
+  max_episode_steps: 1500
+  
+  # 模型保存频率
+  save_freq: 20000
+  
+  # PPO模型参数
+  model:
+    learning_rate: 3e-4
+    n_steps: 2048
+    batch_size: 64
+    n_epochs: 10
+    gamma: 0.99
+    gae_lambda: 0.95
+    clip_range: 0.2
+    ent_coef: 0.01  # 增加熵系数以鼓励探索
+    vf_coef: 0.5
+    max_grad_norm: 0.5
+
+# 环境配置
+environment:
+  # 飞行区域限制
+  flight_bounds:
+    x_min: -100
+    x_max: 100
+    y_min: -100
+    y_max: 100
+    z_min: -50  # AirSim中z轴向下为正
+    z_max: -5
+  
+  # 轨迹配置
+  trajectory:
+    tolerance: 5.0  # 轨迹容忍度(米)
+    waypoint_spacing: 25.0  # 航点间距(米)
+    default_altitude: -15.0  # 默认飞行高度(米)
+  
+  # 电池配置
+  battery:
+    initial_level: 1.0  # 初始电量
+    consumption_rate: 0.001  # 每步消耗率
+    critical_threshold: 0.2  # 临界电量阈值
+    emergency_threshold: 0.1  # 紧急电量阈值
+  
+  # 安全配置
+  safety:
+    min_altitude: 3.0  # 最小安全高度(米)
+    max_altitude: 80.0  # 最大飞行高度(米)
+    max_speed: 15.0  # 最大飞行速度(m/s)
+    collision_detection: true
+
+# 奖励函数配置
+reward_function:
+  # 奖励权重配置
+  weights:
+    tracking: 0.3      # 循迹能力权重
+    recovery: 0.2      # 寻回能力权重
+    emergency: 0.2     # 紧急决策权重
+    safety: 0.2        # 安全性权重
+    efficiency: 0.1    # 能效权重
+  
+  # 循迹奖励配置
+  tracking:
+    max_deviation: 15.0        # 最大允许偏离距离(米)
+    heading_weight: 0.3        # 航向一致性权重
+    speed_weight: 0.2          # 速度一致性权重
+    distance_weight: 0.5       # 距离奖励权重
+    expected_speed: 8.0        # 期望飞行速度(m/s)
+  
+  # 寻回奖励配置
+  recovery:
+    max_deviation: 50.0        # 最大偏离距离(米)
+    max_recovery_time: 120.0   # 最大寻回时间(秒)
+    success_bonus: 2.0         # 成功寻回奖励
+    failure_penalty: -2.0      # 寻回失败惩罚
+    time_penalty_factor: 0.01  # 时间惩罚因子
+  
+  # 紧急决策奖励配置
+  emergency:
+    critical_battery_threshold: 0.2    # 临界电量阈值
+    energy_efficiency_weight: 0.3      # 能效权重
+    decision_quality_weight: 0.7       # 决策质量权重
+    optimal_decision_bonus: 1.5        # 最优决策奖励
+    poor_decision_penalty: -1.0        # 糟糕决策惩罚
+  
+  # 安全性奖励配置
+  safety:
+    collision_penalty: -20.0           # 碰撞惩罚
+    altitude_violation_penalty: -8.0   # 高度违规惩罚
+    speed_violation_penalty: -5.0      # 速度违规惩罚
+    safe_flight_bonus: 0.2             # 安全飞行奖励
+    near_collision_penalty: -3.0       # 接近碰撞惩罚
+  
+  # 能效奖励配置
+  efficiency:
+    energy_consumption_weight: 0.6     # 能耗权重
+    time_efficiency_weight: 0.4        # 时间效率权重
+    optimal_energy_bonus: 0.5          # 最优能效奖励
+    wasteful_penalty: -0.3             # 浪费惩罚
+
+# 动态权重调整配置
+dynamic_weights:
+  # 任务阶段权重调整
+  phase_adjustments:
+    normal:
+      tracking: 0.4
+      efficiency: 0.25
+    recovery:
+      recovery: 0.45
+      tracking: 0.15
+    emergency:
+      safety: 0.4
+      emergency: 0.35
+      tracking: 0.05
+  
+  # 电池电量权重调整
+  battery_adjustments:
+    low_battery_threshold: 0.3
+    adjustments:
+      emergency: +0.15
+      efficiency: +0.1
+      tracking: -0.1
+      recovery: -0.15
+
+# 课程学习配置
+curriculum_learning:
+  enabled: true
+  stages:
+    - name: "基础循迹训练"
+      timesteps: 50000
+      difficulty: 0.3
+      focus_rewards: ["tracking", "safety"]
+      environment_complexity: "simple"
+    
+    - name: "寻回能力训练"
+      timesteps: 75000
+      difficulty: 0.6
+      focus_rewards: ["tracking", "recovery", "safety"]
+      environment_complexity: "medium"
+    
+    - name: "紧急决策训练"
+      timesteps: 100000
+      difficulty: 0.8
+      focus_rewards: ["emergency", "safety", "efficiency"]
+      environment_complexity: "complex"
+    
+    - name: "综合能力训练"
+      timesteps: 200000
+      difficulty: 1.0
+      focus_rewards: ["tracking", "recovery", "emergency", "safety", "efficiency"]
+      environment_complexity: "full"
+
+# 评估配置
+evaluation:
+  # 评估频率
+  eval_freq: 25000
+  
+  # 评估episode数量
+  n_eval_episodes: 20
+  
+  # 评估指标
+  metrics:
+    - "average_reward"
+    - "success_rate"
+    - "tracking_accuracy"
+    - "recovery_success_rate"
+    - "emergency_decision_accuracy"
+    - "safety_violations"
+    - "energy_efficiency"
+  
+  # 评估环境配置
+  eval_scenarios:
+    - name: "标准循迹"
+      trajectory_type: "rectangular"
+      weather: "clear"
+      difficulty: 0.5
+    
+    - name: "复杂环境"
+      trajectory_type: "complex"
+      weather: "windy"
+      difficulty: 0.8
+    
+    - name: "紧急情况"
+      trajectory_type: "long_distance"
+      initial_battery: 0.3
+      difficulty: 1.0
+
+# 日志和监控配置
+logging:
+  # 日志级别
+  level: "INFO"
+  
+  # TensorBoard日志
+  tensorboard:
+    enabled: true
+    log_dir: "./logs/tensorboard"
+    update_freq: 1000
+  
+  # 详细奖励日志
+  reward_logging:
+    enabled: true
+    log_components: true
+    log_frequency: 100
+  
+  # 性能监控
+  performance_monitoring:
+    enabled: true
+    metrics_interval: 5000
+    save_plots: true
+
+# 模型保存配置
+model_save_path: './models/multidimensional_reward'
+
+# 实验配置
+experiment:
+  name: "multidimensional_reward_v1"
+  description: "多元化奖励函数强化学习训练实验"
+  tags: ["multidimensional", "reward", "navigation", "drone"]
+  
+  # 随机种子
+  seed: 42
+  
+  # 并行环境数量
+  n_envs: 1
+  
+  # 设备配置
+  device: "auto"  # "cpu", "cuda", "auto"
