@@ -79,7 +79,7 @@ system:
   airsim:
     # 连接配置
     connection:
-      ip: "127.0.0.1"  # AirSim服务器IP地址
+      ip: "10.255.255.254"  # AirSim服务器IP地址(WSL2环境下的Windows主机IP)
       port: 41451      # AirSim API端口
       timeout: 10.0    # 连接超时时间(秒)
       vehicle_name: "Drone1"  # 无人机名称

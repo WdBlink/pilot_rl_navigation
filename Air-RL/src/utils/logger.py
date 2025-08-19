@@ -151,6 +151,42 @@ class StructuredLogger:
             **kwargs
         )
     
+    def info(self, message: str, **kwargs) -> None:
+        """记录信息级别日志
+        
+        Args:
+            message: 日志消息
+            **kwargs: 附加数据
+        """
+        self.log_event('info', message, **kwargs)
+    
+    def debug(self, message: str, **kwargs) -> None:
+        """记录调试级别日志
+        
+        Args:
+            message: 日志消息
+            **kwargs: 附加数据
+        """
+        self.log_event('debug', message, **kwargs)
+    
+    def warning(self, message: str, **kwargs) -> None:
+        """记录警告级别日志
+        
+        Args:
+            message: 日志消息
+            **kwargs: 附加数据
+        """
+        self.log_event('warning', message, **kwargs)
+    
+    def error(self, message: str, **kwargs) -> None:
+        """记录错误级别日志
+        
+        Args:
+            message: 日志消息
+            **kwargs: 附加数据
+        """
+        self.log_event('error', message, **kwargs)
+    
     def log_error(self, error: Exception, context: Optional[Dict[str, Any]] = None) -> None:
         """记录错误信息
         
@@ -451,3 +487,30 @@ def create_performance_report() -> str:
         性能报告字符串
     """
     return logger_manager.create_performance_report()
+
+
+def setup_logger(component_name: str, log_level: str = "INFO") -> StructuredLogger:
+    """设置并获取组件日志器
+    
+    Args:
+        component_name: 组件名称
+        log_level: 日志级别
+        
+    Returns:
+        结构化日志器实例
+    """
+    # 初始化日志系统（如果尚未初始化）
+    config = {
+        'log_level': log_level,
+        'log_file': f'logs/{component_name}.log',
+        'max_file_size': '10 MB',
+        'backup_count': 5
+    }
+    
+    try:
+        initialize_logging(config)
+    except Exception:
+        # 如果已经初始化，忽略错误
+        pass
+    
+    return get_logger(component_name)
